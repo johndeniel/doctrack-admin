@@ -1,47 +1,47 @@
 -- Users Account Table
 CREATE TABLE IF NOT EXISTS users_account (
-   -- Primary Key: UUID generated automatically for each new account
-   -- Ensures globally unique identification across systems and databases
-   account_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-   
-   -- Username: User's login identifier
-   -- Must be 8-32 characters, allowing only alphanumeric and underscore
-   -- Unique constraint prevents duplicate usernames across system
-   account_username VARCHAR(32) UNIQUE NOT NULL,
-   CONSTRAINT account_username_min_length CHECK (LENGTH(account_username) >= 8),
-   CONSTRAINT account_username_format CHECK (account_username REGEXP '^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$'),
+  -- Primary Key: UUID generated automatically for each new account
+  -- Ensures globally unique identification across systems and databases
+  account_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
 
-   -- Complete Name: User's full legal name
-   -- Stores the complete name as it appears in official documents
-   account_legal_name VARCHAR(100) NOT NULL,
+  -- Complete Name: User's full legal name
+  -- Stores the complete name as it appears in official documents
+  account_legal_name VARCHAR(100) NOT NULL,
    
-   -- Password Hash: Securely stored password using cryptographic hashing
-   -- Stores only the hash, never the plain text password
-   account_password_hash VARCHAR(255) NOT NULL,
+  -- Username: User's login identifier
+  -- Must be 8-32 characters, allowing only alphanumeric and underscore
+  -- Unique constraint prevents duplicate usernames across system
+  account_username VARCHAR(32) UNIQUE NOT NULL,
+  CONSTRAINT account_username_min_length CHECK (LENGTH(account_username) >= 8),
+  CONSTRAINT account_username_format CHECK (account_username REGEXP '^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$'),
    
-   -- Authorization Level: User's system-wide permission level
-   -- Controls access to administrative and protected functions
-   account_authorization_level ENUM('standard_user', 'system_administrator') DEFAULT 'standard_user',
+  -- Password Hash: Securely stored password using cryptographic hashing
+  -- Stores only the hash, never the plain text password
+  account_password_hash VARCHAR(255) NOT NULL,
    
-   -- Division Assignment: User's organizational unit
-   -- ARU-MAU: Appeals and Review Unit - Mediation-Arbitration Unit
-   -- OD: Office of the Director
-   -- PMTSSD: Policy and Program Development Division
-   -- PPDD: Project Planning & Development Division
-   -- URWED: Union Registration and Workers Empowerment Division
-   account_division_designation ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') DEFAULT 'ARU-MAU',
+  -- Authorization Level: User's system-wide permission level
+  -- Controls access to administrative and protected functions
+  account_authorization_level ENUM('standard_user', 'system_administrator') DEFAULT 'standard_user',
    
-   -- Authentication History: Tracks last successful login
-   -- Used for security monitoring and session management
-   account_last_authentication_timestamp TIMESTAMP,
+  -- Division Assignment: User's organizational unit
+  -- ARU-MAU: Appeals and Review Unit - Mediation-Arbitration Unit
+  -- OD: Office of the Director
+  -- PMTSSD: Policy and Program Development Division
+  -- PPDD: Project Planning & Development Division
+  -- URWED: Union Registration and Workers Empowerment Division
+  account_division_designation ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') DEFAULT 'ARU-MAU',
    
-   -- Creation Timestamp: Records when account was first created
-   -- Automatically set upon record insertion
-   account_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  -- Authentication History: Tracks last successful login
+  -- Used for security monitoring and session management
+  account_last_authentication_timestamp TIMESTAMP NULL,
    
-   -- Update Timestamp: Records when account was last modified
-   -- Automatically updated whenever record changes
-   account_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  -- Creation Timestamp: Records when account was first created
+  -- Automatically set upon record insertion
+  account_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   
+  -- Update Timestamp: Records when account was last modified
+  -- Automatically updated whenever record changes
+  account_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 
