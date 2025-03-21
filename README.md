@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📌 MySQL Configuration & XAMPP Auto-Startup Guide
 
-## Getting Started
+This guide provides a step-by-step approach to configuring MySQL in XAMPP, setting up a MySQL user, establishing a database connection, and automating the startup of XAMPP services and a Next.js application on Windows.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🛠️ Configuring MySQL in XAMPP
+
+### 🔹 Step 1: Locate the MySQL Configuration File
+To modify MySQL settings, locate the configuration file:
+
+- **Windows:** `C:\xampp\mysql\bin\my.ini`
+
+### 🔹 Step 2: Modify the Bind Address
+To allow remote access:
+
+1. Open `my.ini`.
+2. Locate:
+   
+   ```ini
+   bind-address = 127.0.0.1
+   ```
+   
+   Change it to:
+   
+   ```ini
+   bind-address = 0.0.0.0
+   ```
+3. Save and restart MySQL.
+
+### 🔹 Step 3: Restart MySQL Service
+
+1. Open XAMPP Control Panel.
+2. Click **Stop** next to MySQL, then **Start**.
+
+### 🔹 Step 4: Connecting to MySQL Remotely
+Use the server’s IPv4 address instead of `localhost`:
+
+- Run `ipconfig` in Command Prompt to find your IP address.
+
+---
+
+## 🏗️ Creating a MySQL User with Full Privileges
+Execute the following SQL commands:
+
+```sql
+CREATE USER 'root'@'%' IDENTIFIED BY 'root';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🔹 Explanation:
+- `'root'@'%'` → Allows connections from any host.
+- `IDENTIFIED BY 'root'` → Sets the password.
+- `GRANT ALL PRIVILEGES` → Grants full access.
+- `WITH GRANT OPTION` → Allows granting permissions to others.
+- `FLUSH PRIVILEGES;` → Applies changes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔗 Database Connection Configuration
+Set up the connection string in `.env`:
 
-## Learn More
+```env
+NEXT_PUBLIC_DATABASE_CONNECTION=mysql://root:root@192.168.68.48:3306/test
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 🔹 Breakdown:
+- `root:root` → MySQL username/password.
+- `192.168.68.48` → Server’s IP address.
+- `3306` → MySQL port.
+- `test` → Database name.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### ⚠️ Security Best Practices
+- ❌ Avoid using `root` in production.
+- 🔒 Restrict remote access to specific IPs instead of `%`.
+- 🔑 Use strong passwords for better security.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 📌 XAMPP Server Auto-Startup Script
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 📂 1. Create a VBScript File
+Open Notepad and add the following script:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```vbscript
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "C:\\xampp\\apache\\bin\\httpd.exe", 0, False
+WshShell.Run "C:\\xampp\\mysql\\bin\\mysqld.exe", 0, False
+```
+
+Save as `start_xampp.vbs`.
+
+### 🚀 2. Add to Windows Startup
+1. Press `Win + R`, type `shell:startup`, and hit `Enter`.
+2. Copy `start_xampp.vbs` into the **Startup** folder.
+
+✅ XAMPP servers will now start automatically on system boot.
+
+---
+
+## 📌 Running a Next.js App at Startup
+
+### 📂 1. Create a VBScript File
+Open Notepad and add the following:
+
+```vbscript
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "cmd /c cd C:\\Users\\YourName\\Projects\\my-nextjs-app && npm run start", 0, False
+```
+
+Replace `C:\\Users\\YourName\\Projects\\my-nextjs-app` with your actual Next.js project path.
+
+Save as `start-nextjs-hidden.vbs`.
+
+### 🚀 2. Add to Windows Startup
+1. Press `Win + R`, type `shell:startup`, and hit `Enter`.
+2. Copy `start-nextjs-hidden.vbs` into the **Startup** folder.
+
+✅ Your Next.js app will now start automatically at system boot.
+
+---
+
+## 📌 Final Notes
+- ⚙️ Ensure **Node.js** and **npm** are installed.
+- 🛠️ Use **Windows Task Scheduler** for admin privileges if required.
+- 🔍 Verify that your **environment variables** load correctly at startup.
+
+💡 With this setup, your **XAMPP servers and Next.js app** will start automatically without any visible command windows! 🚀

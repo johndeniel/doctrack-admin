@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS users_profile_image (
   -- Image Content: Raw binary data of the image file
   -- Stores the actual image bytes directly in the database
   -- Supports files up to 4GB in size (LONGBLOB)
-  profile_image_data LONGBLOB NOT NULL,
+   profile_image_data LONGTEXT NOT NULL,
   
   -- Content Type: Format and type of the stored image
   -- Used for proper image handling and rendering
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS users_profile_image (
   -- File Size: Size of the stored image in bytes
   -- Useful for quick size checks and display purposes
   -- Example: 2097152 (represents 2MB)
-  profile_image_size_bytes BIGINT NOT NULL,
+  profile_image_size_bytes  VARCHAR(255) NOT NULL,
   
   -- Creation Time: When the profile image was first added
   -- Automatically set to current server time on insert

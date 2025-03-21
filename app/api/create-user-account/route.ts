@@ -3,10 +3,9 @@ import { Query } from '@/lib/db/mysql-connection-helper'
 import * as argon2 from 'argon2'
 import { z } from 'zod'
 
-// Validation schema for user creation
 const createUserSchema = z.object({
     account_legal_name: z.string()
-    .min(2, { message: 'Legal name must be at least 2 characters long' })
+    .min(8, { message: 'Legal name must be at least 8 characters long' })
     .max(32, { message: 'Legal name must be at most 32 characters long' }),
 
     account_username: z.string()
@@ -22,19 +21,16 @@ const createUserSchema = z.object({
     .max(32, { message: 'Password must be at most 32 characters long' })
     .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
     .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/\d/, { message: 'Password must contain at least one numeric character' })
-    .regex(/[@$!%*?&]/, { message: 'Password must contain at least one special character' })
-    .refine(val => !/(123|234|345|456|567|678|789|987|876|765|654|543|432|321)/.test(val), {
-      message: 'Password cannot contain sequential numeric patterns'
-    }),
-
-    account_authorization_level: z.string()
-    .min(1, { message: 'Authorization level is required' })
-    .max(32, { message: 'Authorization level must be at most 32 characters long' }),
+    .regex(/\d/, { message: 'Password must contain at least one numeric character' }),
 
     account_division_designation: z.string()
     .min(1, { message: 'Division designation is required' })
-    .max(32, { message: 'Division designation must be at most 32 characters long' })
+    .max(32, { message: 'Division designation must be at most 32 characters long' }),
+
+    users_profile_image_name: z.string(),
+    users_profile_image_data: z.string(),
+    users_profile_image_type: z.string(),
+    users_profile_image_size: z.string()
 });
 
 export async function POST(httpRequest: NextRequest) {
@@ -68,7 +64,12 @@ export async function POST(httpRequest: NextRequest) {
           message: "Username already exists in the system",
           details: { username: validatedUserData.account_username }
         }, { 
-          status: 409 
+          status: 409,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Content-Type': 'application/json'
+          }, 
         });
       }
 
@@ -87,11 +88,9 @@ export async function POST(httpRequest: NextRequest) {
             account_legal_name, 
             account_username, 
             account_password_hash,
-            account_division_designation,
-            account_authorization_level
+            account_division_designation
           ) VALUES (
             ?, 
-            ?,
             ?,
             ?,
             ?
@@ -101,8 +100,7 @@ export async function POST(httpRequest: NextRequest) {
           validatedUserData.account_legal_name,
           validatedUserData.account_username,
           securePasswordHash,
-          validatedUserData.account_division_designation,
-          validatedUserData.account_authorization_level
+          validatedUserData.account_division_designation
         ]
       };
   
@@ -119,6 +117,34 @@ export async function POST(httpRequest: NextRequest) {
       };
   
       const newUserRecords = await Query(getNewUserQuery) as { account_uuid: string }[];
+
+      const insertUsersProfileImage = {
+        query: `
+          INSERT INTO users_profile_image (
+            account_uuid, 
+            profile_image_file_name, 
+            profile_image_data, 
+            profile_image_mime_type,
+            profile_image_size_bytes
+          ) VALUES (
+            ?, 
+            ?,
+            ?,
+            ?,
+            ?
+          )
+        `,
+        values: [
+          newUserRecords[0].account_uuid,
+          validatedUserData.users_profile_image_name,
+          validatedUserData.users_profile_image_data,
+          validatedUserData.users_profile_image_type,
+          validatedUserData.users_profile_image_size
+        ]
+      };
+  
+      await Query(insertUsersProfileImage);
+      
   
       // Finalize transaction
       await Query({ query: 'COMMIT' });
@@ -130,12 +156,19 @@ export async function POST(httpRequest: NextRequest) {
           message: "User account created successfully", 
           userId: newUserRecords[0].account_uuid 
         }, 
-        { status: 201 }
+        { 
+          status: 201,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Content-Type': 'application/json'
+          }, 
+        }
       );
 
     } catch (transactionError) {
       // Revert transaction changes
-      await Query({ query: 'ROLLBACK' });
+      await Query({ query: 'ROLLBACK' }); 
 
       const serverErrorResponse = {
         code: 'TRANSACTION_ERROR',
@@ -146,7 +179,12 @@ export async function POST(httpRequest: NextRequest) {
       console.error('Transaction error:', serverErrorResponse);
 
       return NextResponse.json(serverErrorResponse, { 
-        status: 500 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+          'Content-Type': 'application/json'
+        }, 
       });
     }
 
@@ -165,12 +203,15 @@ export async function POST(httpRequest: NextRequest) {
       return NextResponse.json({
         code: 'VALIDATION_ERROR',
         message: "User account input validation failed",
-        details: {
-          field: firstErrorField,
-          message: validationErrors[firstErrorField]
-        }
-      }, { 
-        status: 400 
+        details: `${firstErrorField}: ${validationErrors[firstErrorField]}`
+      }, 
+      { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+          'Content-Type': 'application/json'
+        }, 
       });
     }
 
@@ -184,7 +225,12 @@ export async function POST(httpRequest: NextRequest) {
     console.error('Critical user creation error:', criticalErrorResponse);
 
     return NextResponse.json(criticalErrorResponse, { 
-      status: 500 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Content-Type': 'application/json'
+      }, 
     });
   }
 }
